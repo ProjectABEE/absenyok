@@ -1,9 +1,12 @@
+import 'package:absennyok/model/historytoday.dart';
 import 'package:absennyok/model/register_model.dart';
+import 'package:absennyok/model/statistik.dart';
 import 'package:absennyok/services/api.dart';
 import 'package:flutter/material.dart';
 import 'package:geocoding/geocoding.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
+import 'package:intl/intl.dart';
 
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
@@ -13,6 +16,26 @@ class HomePage extends StatefulWidget {
 }
 
 class _HomePageState extends State<HomePage> {
+  Statistic? statistic;
+  HistoryToday? historyToday;
+  bool isHistoryLoading = true;
+
+  String getGreeting() {
+    final hour = DateTime.now().hour;
+
+    if (hour >= 5 && hour < 12) {
+      return "Good Morning! 👋";
+    } else if (hour >= 12 && hour < 17) {
+      return "Good Afternoon! 👋";
+    } else if (hour >= 17 && hour < 20) {
+      return "Good Evening 🌆";
+    } else {
+      return "Good Night 🌙";
+    }
+  }
+
+  bool isLoadingIn = false;
+  bool isLoadingOut = false;
   User? user;
   GoogleMapController? _googleMapController;
   LatLng _currentPosition = LatLng(-6.2000, 108.816666);
@@ -24,6 +47,30 @@ class _HomePageState extends State<HomePage> {
     _getCurrentLocation();
     super.initState();
     loadProfile();
+    getTodayHistory();
+    loadStatistic();
+  }
+
+  loadStatistic() async {
+    try {
+      final data = await AuthAPI.getStatistic();
+      setState(() => statistic = data);
+    } catch (e) {
+      print("Error statistic: $e");
+    }
+  }
+
+  getTodayHistory() async {
+    try {
+      final result = await AuthAPI.getHistoryToday();
+      setState(() {
+        historyToday = result;
+        isHistoryLoading = false;
+      });
+    } catch (e) {
+      print("ERROR HISTORY: $e");
+      setState(() => isHistoryLoading = false);
+    }
   }
 
   loadProfile() async {
@@ -108,7 +155,7 @@ class _HomePageState extends State<HomePage> {
               child: Column(
                 children: [
                   Text(
-                    "Good Morning!",
+                    getGreeting(),
                     style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
                   ),
                   SizedBox(height: 5),
@@ -158,10 +205,129 @@ class _HomePageState extends State<HomePage> {
                   const SizedBox(height: 15),
 
                   Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      Expanded(child: _timeCard("Check In", "07 : 50 : 00")),
+                      ElevatedButton(
+                        onPressed: () async {
+                          setState(() => isLoadingIn = true);
+
+                          try {
+                            Position pos = await Geolocator.getCurrentPosition(
+                              desiredAccuracy: LocationAccuracy.high,
+                            );
+
+                            double lat = pos.latitude;
+                            double lng = pos.longitude;
+
+                            // DATE & TIME
+                            String attendanceDate = DateFormat(
+                              "yyyy-MM-dd",
+                            ).format(DateTime.now()); // format utk API
+                            String timeNow = DateFormat(
+                              "HH:mm",
+                            ).format(DateTime.now());
+
+                            final response = await AuthAPI.checkIn(
+                              attendanceDate: attendanceDate,
+                              CheckInTime: timeNow,
+                              checkInLat: lat,
+                              checkInLng: lng,
+                              checkInAddress: _currentAddress,
+                              status: "masuk",
+                            );
+
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(
+                                content: Text(
+                                  response.message ?? "Check-in berhasil",
+                                ),
+                              ),
+                            );
+                          } catch (e) {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(content: Text("Gagal Check-in: $e")),
+                            );
+                          }
+
+                          setState(() => isLoadingIn = false);
+                        },
+
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: Colors.greenAccent.shade400,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(30),
+                          ),
+                        ),
+                        child: Text(
+                          isLoadingIn ? "Loading..." : "Check In",
+                          style: const TextStyle(
+                            color: Colors.black,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ),
+
                       const SizedBox(width: 12),
-                      Expanded(child: _timeCard("Check Out", "17 : 50 : 00")),
+
+                      ElevatedButton(
+                        onPressed: () async {
+                          setState(() => isLoadingOut = true);
+
+                          try {
+                            Position pos = await Geolocator.getCurrentPosition(
+                              desiredAccuracy: LocationAccuracy.high,
+                            );
+
+                            double lat = pos.latitude;
+                            double lng = pos.longitude;
+
+                            // DATE & TIME
+                            String attendanceDate = DateFormat(
+                              "yyyy-MM-dd",
+                            ).format(DateTime.now()); // format utk API
+                            String timeNow = DateFormat(
+                              "HH:mm",
+                            ).format(DateTime.now());
+
+                            final response = await AuthAPI.checkOut(
+                              attendanceDate: attendanceDate,
+                              CheckInTime: timeNow,
+                              checkInLat: lat,
+                              checkInLng: lng,
+                              checkInAddress: _currentAddress,
+                              status: "masuk",
+                            );
+
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(
+                                content: Text(
+                                  response.message ?? "Check-Out berhasil",
+                                ),
+                              ),
+                            );
+                          } catch (e) {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(content: Text("Gagal Check-in: $e")),
+                            );
+                          }
+
+                          setState(() => isLoadingOut = false);
+                        },
+
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: Colors.greenAccent.shade400,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(30),
+                          ),
+                        ),
+                        child: Text(
+                          isLoadingOut ? "Loading..." : "Check Out",
+                          style: const TextStyle(
+                            color: Colors.black,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ),
                     ],
                   ),
                 ],
@@ -216,14 +382,11 @@ class _HomePageState extends State<HomePage> {
                       borderRadius: BorderRadius.circular(12),
                       color: Colors.grey.shade300,
                     ),
-                    child: ClipRRect(
-                      borderRadius: BorderRadius.circular(12),
-                      child: GoogleMap(
-                        myLocationEnabled: true,
-                        initialCameraPosition: CameraPosition(
-                          target: _currentPosition,
-                          zoom: 15,
-                        ),
+                    child: GoogleMap(
+                      myLocationEnabled: true,
+                      initialCameraPosition: CameraPosition(
+                        target: _currentPosition,
+                        zoom: 14,
                       ),
                     ),
                   ),
@@ -248,32 +411,58 @@ class _HomePageState extends State<HomePage> {
                 borderRadius: BorderRadius.circular(12),
                 color: Colors.white,
               ),
-              child: Row(
-                children: [
-                  Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: const [
-                      Text(
-                        "Monday",
-                        style: TextStyle(fontWeight: FontWeight.bold),
-                      ),
-                      Text("13-Jun-25"),
-                    ],
-                  ),
-                  const Spacer(),
-                  Column(
-                    crossAxisAlignment: CrossAxisAlignment.end,
-                    children: const [Text("Check In"), Text("07 : 50 : 00")],
-                  ),
-                  const SizedBox(width: 20),
-                  Column(
-                    crossAxisAlignment: CrossAxisAlignment.end,
-                    children: const [Text("Check Out"), Text("17 : 50 : 00")],
-                  ),
-                  const SizedBox(width: 8),
-                  const Icon(Icons.arrow_forward_ios, size: 16),
-                ],
-              ),
+              child: isHistoryLoading
+                  ? const Center(child: CircularProgressIndicator())
+                  : (historyToday?.data == null
+                        ? const Center(
+                            child: Text(
+                              "Belum ada absensi hari ini",
+                              style: TextStyle(
+                                fontSize: 14,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                          )
+                        : Row(
+                            children: [
+                              Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    DateFormat.EEEE('id_ID').format(
+                                      historyToday!.data!.attendanceDate!,
+                                    ),
+                                    style: const TextStyle(
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                                  ),
+                                  Text(
+                                    DateFormat('dd MMM yyyy', 'id_ID').format(
+                                      historyToday!.data!.attendanceDate!,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                              const Spacer(),
+                              Column(
+                                crossAxisAlignment: CrossAxisAlignment.end,
+                                children: [
+                                  const Text("Check In"),
+                                  Text(historyToday!.data!.checkInTime ?? "-"),
+                                ],
+                              ),
+                              const SizedBox(width: 20),
+                              Column(
+                                crossAxisAlignment: CrossAxisAlignment.end,
+                                children: [
+                                  const Text("Check Out"),
+                                  Text(historyToday!.data!.checkOutTime ?? "-"),
+                                ],
+                              ),
+                              const SizedBox(width: 8),
+                              const Icon(Icons.arrow_forward_ios, size: 16),
+                            ],
+                          )),
             ),
 
             const SizedBox(height: 15),
@@ -290,36 +479,88 @@ class _HomePageState extends State<HomePage> {
             ),
 
             const SizedBox(height: 30),
+            Container(
+              margin: const EdgeInsets.symmetric(horizontal: 18, vertical: 12),
+              padding: const EdgeInsets.all(18),
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(16),
+                color: Colors.white,
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withOpacity(0.05),
+                    blurRadius: 6,
+                  ),
+                ],
+              ),
+              child: statistic == null
+                  ? const Center(child: Text("Memuat statistik..."))
+                  : Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const Text(
+                          "Statistik Kehadiran",
+                          style: TextStyle(
+                            fontSize: 17,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                        const SizedBox(height: 12),
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            _statItem(
+                              "Total Absen",
+                              "${statistic!.data?.totalAbsen ?? 0}",
+                            ),
+                            _statItem(
+                              "Masuk",
+                              "${statistic!.data?.totalMasuk ?? 0}",
+                            ),
+                            _statItem(
+                              "Izin",
+                              "${statistic!.data?.totalIzin ?? 0}",
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 14),
+                        Row(
+                          children: [
+                            Icon(
+                              statistic!.data?.sudahAbsenHariIni == true
+                                  ? Icons.check_circle
+                                  : Icons.cancel,
+                              color: statistic!.data?.sudahAbsenHariIni == true
+                                  ? Colors.green
+                                  : Colors.red,
+                              size: 20,
+                            ),
+                            const SizedBox(width: 8),
+                            Text(
+                              statistic!.data?.sudahAbsenHariIni == true
+                                  ? "Sudah absen hari ini"
+                                  : "Belum absen hari ini",
+                              style: const TextStyle(fontSize: 14),
+                            ),
+                          ],
+                        ),
+                      ],
+                    ),
+            ),
           ],
         ),
       ),
     );
   }
 
-  Widget _timeCard(String title, String time) {
-    return Container(
-      padding: const EdgeInsets.symmetric(vertical: 18),
-      decoration: BoxDecoration(
-        color: const Color(0xff6ea89c),
-        borderRadius: BorderRadius.circular(14),
-      ),
-      child: Column(
-        children: [
-          Text(
-            title,
-            style: const TextStyle(color: Colors.white, fontSize: 15),
-          ),
-          const SizedBox(height: 6),
-          Text(
-            time,
-            style: const TextStyle(
-              color: Colors.white,
-              fontSize: 20,
-              fontWeight: FontWeight.bold,
-            ),
-          ),
-        ],
-      ),
+  Widget _statItem(String title, String value) {
+    return Column(
+      children: [
+        Text(
+          value,
+          style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+        ),
+        Text(title, style: const TextStyle(fontSize: 13, color: Colors.grey)),
+      ],
     );
   }
 }

@@ -1,5 +1,8 @@
 import 'package:absennyok/model/register_model.dart';
+import 'package:absennyok/preferences/preferences_handler.dart';
 import 'package:absennyok/services/api.dart';
+import 'package:absennyok/view/login.dart';
+import 'package:absennyok/widget/buttonmenu.dart';
 import 'package:flutter/material.dart';
 
 class ProfilePage extends StatefulWidget {
@@ -60,38 +63,118 @@ class _ProfilePageState extends State<ProfilePage> {
                   user?.email ?? "Loading...",
                   style: TextStyle(fontSize: 13),
                 ),
+                Text(
+                  "Batch : ${user?.batch?.batchKe ?? "-"}",
+                  style: TextStyle(fontSize: 13),
+                ),
+                Text(
+                  "Training : ${user?.training?.title ?? "-"}",
+                  style: TextStyle(fontSize: 13),
+                ),
               ],
             ),
           ),
 
           const SizedBox(height: 25),
 
-          _menuTile(Icons.person_outline, "Ubah Profil"),
-          _menuTile(Icons.lock_outline, "Ubah Kata Sandi"),
+          menuItem(
+            icon: Icons.edit,
+            text: "Edit Profile",
+            onTap: () {
+              final nameController = TextEditingController(
+                text: user?.name ?? "",
+              );
+              final parentContext = context;
+              showDialog(
+                context: context,
+                builder: (context) {
+                  return AlertDialog(
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(15),
+                    ),
+                    title: const Text("Edit Profile"),
+                    content: TextField(
+                      controller: nameController,
+                      decoration: const InputDecoration(
+                        labelText: "Nama",
+                        border: OutlineInputBorder(),
+                      ),
+                    ),
+                    actions: [
+                      TextButton(
+                        child: const Text("Batal"),
+                        onPressed: () => Navigator.pop(context),
+                      ),
+                      ElevatedButton(
+                        child: const Text("Simpan"),
+                        onPressed: () async {
+                          final newName = nameController.text.trim();
+
+                          if (newName.isEmpty) return;
+
+                          Navigator.pop(context); // tutup dialog
+
+                          final token = await PreferenceHandler.getToken();
+
+                          try {
+                            final result = await AuthAPI.UpdateProfile(
+                              nama: newName,
+                              token: token!,
+                            );
+
+                            // Update UI
+                            setState(() {
+                              user = result.data!.user;
+                            });
+
+                            // Notifikasi success
+                            ScaffoldMessenger.of(parentContext).showSnackBar(
+                              const SnackBar(
+                                content: Text("Profil berhasil diperbarui"),
+                              ),
+                            );
+
+                            await loadProfile();
+                          } catch (e) {
+                            ScaffoldMessenger.of(parentContext).showSnackBar(
+                              SnackBar(content: Text(e.toString())),
+                            );
+                          }
+                        },
+                      ),
+                    ],
+                  );
+                },
+              );
+              // Arahkan ke halaman edit profile
+              // context.push(EditProfile());
+            },
+          ),
 
           const SizedBox(height: 10),
 
-          _menuTile(Icons.logout, "Keluar", color: Colors.red),
-        ],
-      ),
-    );
-  }
-
-  Widget _menuTile(IconData icon, String title, {Color color = Colors.black}) {
-    return Container(
-      margin: const EdgeInsets.symmetric(horizontal: 15, vertical: 6),
-      padding: const EdgeInsets.symmetric(vertical: 15, horizontal: 15),
-      decoration: BoxDecoration(
-        color: const Color(0xffcccccc),
-        borderRadius: BorderRadius.circular(8),
-      ),
-      child: Row(
-        children: [
-          Icon(icon, color: color),
-          const SizedBox(width: 10),
-          Text(title, style: TextStyle(fontSize: 16, color: color)),
-          const Spacer(),
-          const Icon(Icons.arrow_forward_ios, size: 18),
+          SizedBox(height: 10),
+          Padding(
+            padding: const EdgeInsets.only(left: 16),
+            child: TextButton(
+              onPressed: () {
+                PreferenceHandler.removeLogin();
+                PreferenceHandler.removeToken();
+                Navigator.pushAndRemoveUntil(
+                  context,
+                  MaterialPageRoute(builder: (context) => LoginPage()),
+                  (route) => false,
+                );
+              },
+              child: Row(
+                children: [
+                  Icon(Icons.logout, color: Colors.red),
+                  SizedBox(width: 14),
+                  Text("Logout", style: TextStyle(color: Colors.red)),
+                ],
+              ),
+            ),
+          ),
         ],
       ),
     );

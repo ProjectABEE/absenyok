@@ -1,20 +1,21 @@
 // To parse this JSON data, do
 //
-//     final checkin = checkinFromJson(jsonString);
+//     final historyToday = historyTodayFromJson(jsonString);
 
 import 'dart:convert';
 
-Checkin checkinFromJson(String str) => Checkin.fromJson(json.decode(str));
+HistoryToday historyTodayFromJson(String str) =>
+    HistoryToday.fromJson(json.decode(str));
 
-String checkinToJson(Checkin data) => json.encode(data.toJson());
+String historyTodayToJson(HistoryToday data) => json.encode(data.toJson());
 
-class Checkin {
+class HistoryToday {
   String? message;
   Data? data;
 
-  Checkin({this.message, this.data});
+  HistoryToday({this.message, this.data});
 
-  factory Checkin.fromJson(Map<String, dynamic> json) => Checkin(
+  factory HistoryToday.fromJson(Map<String, dynamic> json) => HistoryToday(
     message: json["message"],
     data: json["data"] == null ? null : Data.fromJson(json["data"]),
   );
@@ -23,51 +24,43 @@ class Checkin {
 }
 
 class Data {
-  int? id;
   DateTime? attendanceDate;
   String? checkInTime;
-  double? checkInLat;
-  double? checkInLng;
-  String? checkInLocation;
+  String? checkOutTime;
   String? checkInAddress;
+  String? checkOutAddress;
   String? status;
   dynamic alasanIzin;
 
   Data({
-    this.id,
     this.attendanceDate,
     this.checkInTime,
-    this.checkInLat,
-    this.checkInLng,
-    this.checkInLocation,
+    this.checkOutTime,
     this.checkInAddress,
+    this.checkOutAddress,
     this.status,
     this.alasanIzin,
   });
 
   factory Data.fromJson(Map<String, dynamic> json) => Data(
-    id: json["id"],
     attendanceDate: json["attendance_date"] == null
         ? null
         : DateTime.parse(json["attendance_date"]),
     checkInTime: json["check_in_time"],
-    checkInLat: json["check_in_lat"]?.toDouble(),
-    checkInLng: json["check_in_lng"]?.toDouble(),
-    checkInLocation: json["check_in_location"],
+    checkOutTime: json["check_out_time"],
     checkInAddress: json["check_in_address"],
+    checkOutAddress: json["check_out_address"],
     status: json["status"],
     alasanIzin: json["alasan_izin"],
   );
 
   Map<String, dynamic> toJson() => {
-    "id": id,
     "attendance_date":
         "${attendanceDate!.year.toString().padLeft(4, '0')}-${attendanceDate!.month.toString().padLeft(2, '0')}-${attendanceDate!.day.toString().padLeft(2, '0')}",
     "check_in_time": checkInTime,
-    "check_in_lat": checkInLat,
-    "check_in_lng": checkInLng,
-    "check_in_location": checkInLocation,
+    "check_out_time": checkOutTime,
     "check_in_address": checkInAddress,
+    "check_out_address": checkOutAddress,
     "status": status,
     "alasan_izin": alasanIzin,
   };
