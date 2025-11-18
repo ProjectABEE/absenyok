@@ -11,7 +11,7 @@ Widget menuItem({
     onTap: onTap,
     child: Container(
       padding: const EdgeInsets.symmetric(vertical: 15, horizontal: 10),
-      margin: const EdgeInsets.only(bottom: 15),
+      margin: const EdgeInsets.only(bottom: 15, right: 15, left: 15),
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(12),
         color: Colors.grey.shade100,

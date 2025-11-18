@@ -2,6 +2,8 @@ import 'package:absennyok/model/historytoday.dart';
 import 'package:absennyok/model/register_model.dart';
 import 'package:absennyok/model/statistik.dart';
 import 'package:absennyok/services/api.dart';
+import 'package:absennyok/widget/glass.dart';
+import 'package:absennyok/widget/stat.dart';
 import 'package:flutter/material.dart';
 import 'package:geocoding/geocoding.dart';
 import 'package:geolocator/geolocator.dart';
@@ -137,430 +139,368 @@ class _HomePageState extends State<HomePage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xffe8e8e8),
-      body: SingleChildScrollView(
-        child: Column(
-          children: [
-            // Top grey gradient background
-            Container(
-              width: double.infinity,
-              padding: const EdgeInsets.only(top: 70, bottom: 20),
-              decoration: const BoxDecoration(
-                gradient: LinearGradient(
-                  begin: Alignment.topCenter,
-                  end: Alignment.bottomCenter,
-                  colors: [Color(0xff9e9e9e), Color(0xffc9c9c9)],
-                ),
-              ),
-              child: Column(
-                children: [
-                  Text(
-                    getGreeting(),
-                    style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
-                  ),
-                  SizedBox(height: 5),
-                  Text(
-                    user?.name ?? "Loading...",
-                    style: TextStyle(fontSize: 16),
-                  ),
-                  Text(
-                    user?.email ?? "Loading...",
-                    style: TextStyle(fontSize: 13),
-                  ),
-                ],
-              ),
-            ),
-
-            const SizedBox(height: 15),
-
-            // LOCATION + CHECK IN/OUT CARD
-            Container(
-              margin: const EdgeInsets.symmetric(horizontal: 18),
-              padding: const EdgeInsets.all(15),
-              decoration: BoxDecoration(
-                color: const Color(0xffe2e2e2),
-                borderRadius: BorderRadius.circular(16),
-              ),
-              child: Column(
-                children: [
-                  Row(
-                    children: [
-                      const Icon(
-                        Icons.location_pin,
-                        color: Colors.red,
-                        size: 20,
-                      ),
-                      const SizedBox(width: 6),
-                      Expanded(
-                        child: Text(
-                          _currentAddress,
-                          style: TextStyle(
-                            fontSize: 13,
-                            color: Colors.grey.shade800,
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 15),
-
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      ElevatedButton(
-                        onPressed: () async {
-                          setState(() => isLoadingIn = true);
-
-                          try {
-                            Position pos = await Geolocator.getCurrentPosition(
-                              desiredAccuracy: LocationAccuracy.high,
-                            );
-
-                            double lat = pos.latitude;
-                            double lng = pos.longitude;
-
-                            // DATE & TIME
-                            String attendanceDate = DateFormat(
-                              "yyyy-MM-dd",
-                            ).format(DateTime.now()); // format utk API
-                            String timeNow = DateFormat(
-                              "HH:mm",
-                            ).format(DateTime.now());
-
-                            final response = await AuthAPI.checkIn(
-                              attendanceDate: attendanceDate,
-                              CheckInTime: timeNow,
-                              checkInLat: lat,
-                              checkInLng: lng,
-                              checkInAddress: _currentAddress,
-                              status: "masuk",
-                            );
-
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              SnackBar(
-                                content: Text(
-                                  response.message ?? "Check-in berhasil",
-                                ),
-                              ),
-                            );
-                          } catch (e) {
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              SnackBar(content: Text("Gagal Check-in: $e")),
-                            );
-                          }
-
-                          setState(() => isLoadingIn = false);
-                        },
-
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: Colors.greenAccent.shade400,
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(30),
-                          ),
-                        ),
-                        child: Text(
-                          isLoadingIn ? "Loading..." : "Check In",
-                          style: const TextStyle(
-                            color: Colors.black,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                      ),
-
-                      const SizedBox(width: 12),
-
-                      ElevatedButton(
-                        onPressed: () async {
-                          setState(() => isLoadingOut = true);
-
-                          try {
-                            Position pos = await Geolocator.getCurrentPosition(
-                              desiredAccuracy: LocationAccuracy.high,
-                            );
-
-                            double lat = pos.latitude;
-                            double lng = pos.longitude;
-
-                            // DATE & TIME
-                            String attendanceDate = DateFormat(
-                              "yyyy-MM-dd",
-                            ).format(DateTime.now()); // format utk API
-                            String timeNow = DateFormat(
-                              "HH:mm",
-                            ).format(DateTime.now());
-
-                            final response = await AuthAPI.checkOut(
-                              attendanceDate: attendanceDate,
-                              CheckInTime: timeNow,
-                              checkInLat: lat,
-                              checkInLng: lng,
-                              checkInAddress: _currentAddress,
-                              status: "masuk",
-                            );
-
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              SnackBar(
-                                content: Text(
-                                  response.message ?? "Check-Out berhasil",
-                                ),
-                              ),
-                            );
-                          } catch (e) {
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              SnackBar(content: Text("Gagal Check-in: $e")),
-                            );
-                          }
-
-                          setState(() => isLoadingOut = false);
-                        },
-
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: Colors.greenAccent.shade400,
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(30),
-                          ),
-                        ),
-                        child: Text(
-                          isLoadingOut ? "Loading..." : "Check Out",
-                          style: const TextStyle(
-                            color: Colors.black,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                ],
-              ),
-            ),
-
-            const SizedBox(height: 15),
-
-            // Distance + Map
-            Row(
+      body: Container(
+        width: double.infinity,
+        height: double.infinity,
+        decoration: const BoxDecoration(
+          gradient: LinearGradient(
+            begin: Alignment.topCenter,
+            end: Alignment.bottomCenter,
+            colors: [Color(0xff2E2E2E), Color(0xff1A1A1A)],
+          ),
+        ),
+        child: SafeArea(
+          child: SingleChildScrollView(
+            padding: const EdgeInsets.symmetric(horizontal: 20),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Expanded(
-                  child: Container(
-                    height: 150,
-                    margin: const EdgeInsets.only(left: 18, right: 10),
-                    padding: const EdgeInsets.all(15),
-                    decoration: BoxDecoration(
-                      color: const Color(0xffb6b6b6),
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          "Distance from place",
-                          style: TextStyle(fontSize: 13, color: Colors.white),
+                // GREETING + USER INFO
+                Padding(
+                  padding: const EdgeInsets.only(top: 10, bottom: 25),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        getGreeting(),
+                        style: const TextStyle(
+                          fontSize: 26,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.white,
                         ),
-                        SizedBox(height: 10),
-                        Text(
-                          "↯ 250.43m",
-                          style: TextStyle(
-                            fontSize: 22,
-                            fontWeight: FontWeight.bold,
-                            color: Colors.orange,
-                          ),
-                        ),
-                        ElevatedButton(
-                          onPressed: () {
-                            _getCurrentLocation();
-                          },
-                          child: Text("Refresh "),
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
-                Expanded(
-                  child: Container(
-                    margin: const EdgeInsets.only(right: 18, left: 10),
-                    height: 120,
-                    decoration: BoxDecoration(
-                      borderRadius: BorderRadius.circular(12),
-                      color: Colors.grey.shade300,
-                    ),
-                    child: GoogleMap(
-                      myLocationEnabled: true,
-                      initialCameraPosition: CameraPosition(
-                        target: _currentPosition,
-                        zoom: 14,
                       ),
-                    ),
+                      const SizedBox(height: 6),
+                      Text(
+                        user?.name ?? "Loading...",
+                        style: TextStyle(
+                          fontSize: 17,
+                          color: Colors.white.withOpacity(0.9),
+                        ),
+                      ),
+                      Text(
+                        user?.email ?? "",
+                        style: TextStyle(
+                          fontSize: 13,
+                          color: Colors.white.withOpacity(0.5),
+                        ),
+                      ),
+                    ],
                   ),
                 ),
-              ],
-            ),
 
-            const SizedBox(height: 20),
-
-            // Riwayat Kehadiran
-            const Text(
-              "Riwayat Kehadiran",
-              style: TextStyle(fontSize: 17, fontWeight: FontWeight.bold),
-            ),
-
-            const SizedBox(height: 10),
-
-            Container(
-              margin: const EdgeInsets.symmetric(horizontal: 18),
-              padding: const EdgeInsets.all(15),
-              decoration: BoxDecoration(
-                borderRadius: BorderRadius.circular(12),
-                color: Colors.white,
-              ),
-              child: isHistoryLoading
-                  ? const Center(child: CircularProgressIndicator())
-                  : (historyToday?.data == null
-                        ? const Center(
+                // GLASS CARD — LOCATION + CHECK BUTTONS
+                glassCard(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        children: [
+                          const Icon(
+                            Icons.location_pin,
+                            color: Colors.red,
+                            size: 20,
+                          ),
+                          const SizedBox(width: 6),
+                          Expanded(
                             child: Text(
-                              "Belum ada absensi hari ini",
+                              _currentAddress,
                               style: TextStyle(
-                                fontSize: 14,
+                                fontSize: 13,
+                                color: Colors.white.withOpacity(0.9),
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 18),
+
+                      // BUTTON CHECK IN / OUT
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          // --- BUTTON CHECK IN ---
+                          ElevatedButton(
+                            onPressed: () async {
+                              setState(() => isLoadingIn = true);
+
+                              try {
+                                Position pos =
+                                    await Geolocator.getCurrentPosition(
+                                      desiredAccuracy: LocationAccuracy.high,
+                                    );
+
+                                double lat = pos.latitude;
+                                double lng = pos.longitude;
+
+                                String attendanceDate = DateFormat(
+                                  "yyyy-MM-dd",
+                                ).format(DateTime.now());
+                                String timeNow = DateFormat(
+                                  "HH:mm",
+                                ).format(DateTime.now());
+
+                                final response = await AuthAPI.checkIn(
+                                  attendanceDate: attendanceDate,
+                                  CheckInTime: timeNow,
+                                  checkInLat: lat,
+                                  checkInLng: lng,
+                                  checkInAddress: _currentAddress,
+                                  status: "masuk",
+                                );
+
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  SnackBar(
+                                    content: Text(
+                                      response.message ?? "Check-in berhasil",
+                                    ),
+                                  ),
+                                );
+
+                                getTodayHistory(); // reload riwayat
+                                loadStatistic(); // update statistik
+                              } catch (e) {
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  SnackBar(content: Text("Gagal Check-in: $e")),
+                                );
+                              }
+
+                              setState(() => isLoadingIn = false);
+                            },
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: Colors.greenAccent.shade400,
+                              shadowColor: Colors.greenAccent.withOpacity(0.3),
+                              elevation: 6,
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(30),
+                              ),
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 25,
+                                vertical: 14,
+                              ),
+                            ),
+                            child: Text(
+                              isLoadingIn ? "Loading..." : "Check In",
+                              style: const TextStyle(
+                                color: Colors.black,
                                 fontWeight: FontWeight.bold,
                               ),
                             ),
-                          )
-                        : Row(
-                            children: [
-                              Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Text(
-                                    DateFormat.EEEE('id_ID').format(
-                                      historyToday!.data!.attendanceDate!,
-                                    ),
-                                    style: const TextStyle(
-                                      fontWeight: FontWeight.bold,
-                                    ),
-                                  ),
-                                  Text(
-                                    DateFormat('dd MMM yyyy', 'id_ID').format(
-                                      historyToday!.data!.attendanceDate!,
-                                    ),
-                                  ),
-                                ],
-                              ),
-                              const Spacer(),
-                              Column(
-                                crossAxisAlignment: CrossAxisAlignment.end,
-                                children: [
-                                  const Text("Check In"),
-                                  Text(historyToday!.data!.checkInTime ?? "-"),
-                                ],
-                              ),
-                              const SizedBox(width: 20),
-                              Column(
-                                crossAxisAlignment: CrossAxisAlignment.end,
-                                children: [
-                                  const Text("Check Out"),
-                                  Text(historyToday!.data!.checkOutTime ?? "-"),
-                                ],
-                              ),
-                              const SizedBox(width: 8),
-                              const Icon(Icons.arrow_forward_ios, size: 16),
-                            ],
-                          )),
-            ),
-
-            const SizedBox(height: 15),
-
-            Align(
-              alignment: Alignment.centerRight,
-              child: Padding(
-                padding: const EdgeInsets.only(right: 18),
-                child: Text(
-                  "Lihat Semua",
-                  style: TextStyle(color: Colors.blue.shade800, fontSize: 13),
-                ),
-              ),
-            ),
-
-            const SizedBox(height: 30),
-            Container(
-              margin: const EdgeInsets.symmetric(horizontal: 18, vertical: 12),
-              padding: const EdgeInsets.all(18),
-              decoration: BoxDecoration(
-                borderRadius: BorderRadius.circular(16),
-                color: Colors.white,
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.black.withOpacity(0.05),
-                    blurRadius: 6,
-                  ),
-                ],
-              ),
-              child: statistic == null
-                  ? const Center(child: Text("Memuat statistik..."))
-                  : Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        const Text(
-                          "Statistik Kehadiran",
-                          style: TextStyle(
-                            fontSize: 17,
-                            fontWeight: FontWeight.bold,
                           ),
+
+                          const SizedBox(width: 12),
+
+                          // --- BUTTON CHECK OUT ---
+                          ElevatedButton(
+                            onPressed: () async {
+                              setState(() => isLoadingOut = true);
+
+                              try {
+                                Position pos =
+                                    await Geolocator.getCurrentPosition(
+                                      desiredAccuracy: LocationAccuracy.high,
+                                    );
+
+                                double lat = pos.latitude;
+                                double lng = pos.longitude;
+
+                                String attendanceDate = DateFormat(
+                                  "yyyy-MM-dd",
+                                ).format(DateTime.now());
+                                String timeNow = DateFormat(
+                                  "HH:mm",
+                                ).format(DateTime.now());
+
+                                final response = await AuthAPI.checkOut(
+                                  attendanceDate: attendanceDate,
+                                  CheckInTime: timeNow,
+                                  checkInLat: lat,
+                                  checkInLng: lng,
+                                  checkInAddress: _currentAddress,
+                                  status: "masuk",
+                                );
+
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  SnackBar(
+                                    content: Text(
+                                      response.message ?? "Check-Out berhasil",
+                                    ),
+                                  ),
+                                );
+
+                                getTodayHistory();
+                                loadStatistic();
+                              } catch (e) {
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  SnackBar(
+                                    content: Text("Gagal Check-Out: $e"),
+                                  ),
+                                );
+                              }
+
+                              setState(() => isLoadingOut = false);
+                            },
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: Colors.blue.shade300,
+                              elevation: 6,
+                              shadowColor: Colors.blue.withOpacity(0.3),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(30),
+                              ),
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 25,
+                                vertical: 14,
+                              ),
+                            ),
+                            child: Text(
+                              isLoadingOut ? "Loading..." : "Check Out",
+                              style: const TextStyle(
+                                color: Colors.black,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
+                ),
+
+                const SizedBox(height: 20),
+
+                // GLASS CARD — MAP PREVIEW
+                glassCard(
+                  child: SizedBox(
+                    height: 180,
+                    child: ClipRRect(
+                      borderRadius: BorderRadius.circular(18),
+                      child: GoogleMap(
+                        myLocationEnabled: true,
+                        initialCameraPosition: CameraPosition(
+                          target: _currentPosition,
+                          zoom: 15,
                         ),
-                        const SizedBox(height: 12),
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: [
-                            _statItem(
-                              "Total Absen",
-                              "${statistic!.data?.totalAbsen ?? 0}",
-                            ),
-                            _statItem(
-                              "Masuk",
-                              "${statistic!.data?.totalMasuk ?? 0}",
-                            ),
-                            _statItem(
-                              "Izin",
-                              "${statistic!.data?.totalIzin ?? 0}",
-                            ),
-                          ],
-                        ),
-                        const SizedBox(height: 14),
-                        Row(
-                          children: [
-                            Icon(
-                              statistic!.data?.sudahAbsenHariIni == true
-                                  ? Icons.check_circle
-                                  : Icons.cancel,
-                              color: statistic!.data?.sudahAbsenHariIni == true
-                                  ? Colors.green
-                                  : Colors.red,
-                              size: 20,
-                            ),
-                            const SizedBox(width: 8),
-                            Text(
-                              statistic!.data?.sudahAbsenHariIni == true
-                                  ? "Sudah absen hari ini"
-                                  : "Belum absen hari ini",
-                              style: const TextStyle(fontSize: 14),
-                            ),
-                          ],
-                        ),
-                      ],
+                      ),
                     ),
+                  ),
+                ),
+
+                const SizedBox(height: 20),
+
+                // GLASS CARD — TODAY HISTORY
+                glassCard(
+                  child: historyToday == null
+                      ? const Center(
+                          child: Padding(
+                            padding: EdgeInsets.all(20),
+                            child: CircularProgressIndicator(),
+                          ),
+                        )
+                      : Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            const Text(
+                              "Today's Attendance",
+                              style: TextStyle(
+                                color: Colors.white,
+                                fontSize: 17,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                            const SizedBox(height: 12),
+
+                            Row(
+                              children: [
+                                Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(
+                                      historyToday?.data?.checkInTime ?? "-",
+                                      style: const TextStyle(
+                                        color: Colors.greenAccent,
+                                        fontWeight: FontWeight.bold,
+                                        fontSize: 18,
+                                      ),
+                                    ),
+                                    const Text(
+                                      "Check In",
+                                      style: TextStyle(color: Colors.white70),
+                                    ),
+                                  ],
+                                ),
+                                const Spacer(),
+                                Column(
+                                  crossAxisAlignment: CrossAxisAlignment.end,
+                                  children: [
+                                    Text(
+                                      historyToday?.data?.checkOutTime ?? "-",
+                                      style: const TextStyle(
+                                        color: Colors.orangeAccent,
+                                        fontWeight: FontWeight.bold,
+                                        fontSize: 18,
+                                      ),
+                                    ),
+                                    const Text(
+                                      "Check Out",
+                                      style: TextStyle(color: Colors.white70),
+                                    ),
+                                  ],
+                                ),
+                              ],
+                            ),
+                          ],
+                        ),
+                ),
+
+                const SizedBox(height: 20),
+
+                // GLASS CARD — STATISTIC
+                glassCard(
+                  child: statistic == null
+                      ? const Center(
+                          child: Text(
+                            "Loading statistik...",
+                            style: TextStyle(color: Colors.white),
+                          ),
+                        )
+                      : Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            const Text(
+                              "Attendance Statistics",
+                              style: TextStyle(
+                                fontSize: 17,
+                                fontWeight: FontWeight.bold,
+                                color: Colors.white,
+                              ),
+                            ),
+                            const SizedBox(height: 15),
+                            Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              children: [
+                                statBox(
+                                  "Absen",
+                                  "${statistic!.data?.totalAbsen ?? 0}",
+                                ),
+                                statBox(
+                                  "Masuk",
+                                  "${statistic!.data?.totalMasuk ?? 0}",
+                                ),
+                                statBox(
+                                  "Izin",
+                                  "${statistic!.data?.totalIzin ?? 0}",
+                                ),
+                              ],
+                            ),
+                          ],
+                        ),
+                ),
+
+                const SizedBox(height: 50),
+              ],
             ),
-          ],
+          ),
         ),
       ),
-    );
-  }
-
-  Widget _statItem(String title, String value) {
-    return Column(
-      children: [
-        Text(
-          value,
-          style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
-        ),
-        Text(title, style: const TextStyle(fontSize: 13, color: Colors.grey)),
-      ],
     );
   }
 }

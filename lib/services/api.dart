@@ -220,7 +220,7 @@ class AuthAPI {
     }
   }
 
-  static Future<User> UpdateProfile({
+  static Future<Register> UpdateProfile({
     required String nama,
     required String token,
   }) async {
@@ -234,7 +234,7 @@ class AuthAPI {
     print(response.statusCode);
     log(response.body);
     if (response.statusCode == 200) {
-      return User.fromJson(json.decode(response.body));
+      return Register.fromJson(json.decode(response.body));
     } else {
       final error = json.decode(response.body);
       throw Exception(error["message"]);
