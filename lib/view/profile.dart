@@ -1,7 +1,32 @@
+import 'package:absennyok/model/register_model.dart';
+import 'package:absennyok/services/api.dart';
 import 'package:flutter/material.dart';
 
-class ProfilePage extends StatelessWidget {
+class ProfilePage extends StatefulWidget {
   const ProfilePage({super.key});
+
+  @override
+  State<ProfilePage> createState() => _ProfilePageState();
+}
+
+class _ProfilePageState extends State<ProfilePage> {
+  User? user;
+  @override
+  void initState() {
+    super.initState();
+    loadProfile();
+  }
+
+  loadProfile() async {
+    try {
+      final result = await AuthAPI.getProfile();
+      setState(() {
+        user = result;
+      });
+    } catch (e) {
+      print(e);
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -20,7 +45,7 @@ class ProfilePage extends StatelessWidget {
               ),
             ),
             child: Column(
-              children: const [
+              children: [
                 CircleAvatar(
                   radius: 50,
                   backgroundColor: Colors.white,
@@ -28,10 +53,13 @@ class ProfilePage extends StatelessWidget {
                 ),
                 SizedBox(height: 15),
                 Text(
-                  "Muhammad Rio Akbar",
+                  user?.name ?? "Loading...",
                   style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
                 ),
-                Text("123456789", style: TextStyle(fontSize: 13)),
+                Text(
+                  user?.email ?? "Loading...",
+                  style: TextStyle(fontSize: 13),
+                ),
               ],
             ),
           ),

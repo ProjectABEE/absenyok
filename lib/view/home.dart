@@ -1,10 +1,91 @@
+import 'package:absennyok/model/register_model.dart';
+import 'package:absennyok/services/api.dart';
 import 'package:flutter/material.dart';
+import 'package:geocoding/geocoding.dart';
+import 'package:geolocator/geolocator.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 
-class HomePage extends StatelessWidget {
+class HomePage extends StatefulWidget {
   const HomePage({super.key});
 
-  final LatLng _officeLocation = const LatLng(3.589328, 98.673825);
+  @override
+  State<HomePage> createState() => _HomePageState();
+}
+
+class _HomePageState extends State<HomePage> {
+  User? user;
+  GoogleMapController? _googleMapController;
+  LatLng _currentPosition = LatLng(-6.2000, 108.816666);
+  String _currentAddress = "Alamat tidak ditemukan";
+
+  Marker? _marker;
+  @override
+  void initState() {
+    _getCurrentLocation();
+    super.initState();
+    loadProfile();
+  }
+
+  loadProfile() async {
+    try {
+      final result = await AuthAPI.getProfile();
+      setState(() {
+        user = result;
+      });
+    } catch (e) {
+      print(e);
+    }
+  }
+
+  Future<void> _getCurrentLocation() async {
+    bool serviceEnabled = await Geolocator.isLocationServiceEnabled();
+    if (!serviceEnabled) {
+      await Geolocator.openLocationSettings();
+      return;
+    }
+
+    LocationPermission permission = await Geolocator.checkPermission();
+    if (permission == LocationPermission.denied ||
+        permission == LocationPermission.deniedForever) {
+      permission = await Geolocator.requestPermission();
+      if (permission != LocationPermission.whileInUse &&
+          permission != LocationPermission.always) {
+        return;
+      }
+    }
+
+    Position position = await Geolocator.getCurrentPosition(
+      desiredAccuracy: LocationAccuracy.high,
+    );
+
+    _currentPosition = LatLng(position.latitude, position.longitude);
+
+    List<Placemark> placemarks = await placemarkFromCoordinates(
+      _currentPosition.latitude,
+      _currentPosition.longitude,
+    );
+    Placemark place = placemarks[0];
+
+    setState(() {
+      _marker = Marker(
+        markerId: const MarkerId("lokasi_saya"),
+        position: _currentPosition,
+        infoWindow: InfoWindow(
+          title: "Lokasi Anda",
+          snippet: "${place.street}, ${place.locality}",
+        ),
+      );
+
+      _currentAddress =
+          "${place.name}, ${place.street}, ${place.locality}, ${place.country}, ${place.postalCode}";
+
+      _googleMapController?.animateCamera(
+        CameraUpdate.newCameraPosition(
+          CameraPosition(target: _currentPosition, zoom: 16),
+        ),
+      );
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -25,14 +106,20 @@ class HomePage extends StatelessWidget {
                 ),
               ),
               child: Column(
-                children: const [
+                children: [
                   Text(
                     "Good Morning!",
                     style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
                   ),
                   SizedBox(height: 5),
-                  Text("Muhammad Rio Akbar", style: TextStyle(fontSize: 16)),
-                  Text("123456789", style: TextStyle(fontSize: 13)),
+                  Text(
+                    user?.name ?? "Loading...",
+                    style: TextStyle(fontSize: 16),
+                  ),
+                  Text(
+                    user?.email ?? "Loading...",
+                    style: TextStyle(fontSize: 13),
+                  ),
                 ],
               ),
             ),
@@ -59,7 +146,7 @@ class HomePage extends StatelessWidget {
                       const SizedBox(width: 6),
                       Expanded(
                         child: Text(
-                          "Jl. Pangeran Diponegoro No 5, Kec. Medan Petisah, Kota Medan, Sumatra Utara",
+                          _currentAddress,
                           style: TextStyle(
                             fontSize: 13,
                             color: Colors.grey.shade800,
@@ -88,7 +175,7 @@ class HomePage extends StatelessWidget {
               children: [
                 Expanded(
                   child: Container(
-                    height: 120,
+                    height: 150,
                     margin: const EdgeInsets.only(left: 18, right: 10),
                     padding: const EdgeInsets.all(15),
                     decoration: BoxDecoration(
@@ -97,7 +184,7 @@ class HomePage extends StatelessWidget {
                     ),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
-                      children: const [
+                      children: [
                         Text(
                           "Distance from place",
                           style: TextStyle(fontSize: 13, color: Colors.white),
@@ -110,6 +197,12 @@ class HomePage extends StatelessWidget {
                             fontWeight: FontWeight.bold,
                             color: Colors.orange,
                           ),
+                        ),
+                        ElevatedButton(
+                          onPressed: () {
+                            _getCurrentLocation();
+                          },
+                          child: Text("Refresh "),
                         ),
                       ],
                     ),
@@ -126,18 +219,11 @@ class HomePage extends StatelessWidget {
                     child: ClipRRect(
                       borderRadius: BorderRadius.circular(12),
                       child: GoogleMap(
+                        myLocationEnabled: true,
                         initialCameraPosition: CameraPosition(
-                          target: _officeLocation,
+                          target: _currentPosition,
                           zoom: 15,
                         ),
-                        markers: {
-                          Marker(
-                            markerId: const MarkerId("office"),
-                            position: _officeLocation,
-                          ),
-                        },
-                        zoomControlsEnabled: false,
-                        myLocationButtonEnabled: false,
                       ),
                     ),
                   ),
