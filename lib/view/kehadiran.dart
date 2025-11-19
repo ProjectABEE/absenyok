@@ -33,6 +33,22 @@ class _KehadiranPageState extends State<KehadiranPage> {
     }
   }
 
+  Future<void> deleteHistory(String id) async {
+    try {
+      final result = await AuthAPI.deleteHistory(id: id);
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(result.message ?? "Berhasil menghapus")),
+      );
+
+      loadHistoryAbsen(); // refresh list setelah hapus
+    } catch (e) {
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text("Gagal menghapus: $e")));
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -198,11 +214,42 @@ class _KehadiranPageState extends State<KehadiranPage> {
                 ],
               ),
 
-              const SizedBox(width: 8),
-              Icon(
-                Icons.arrow_forward_ios,
-                size: 16,
-                color: Colors.white.withOpacity(0.5),
+              const SizedBox(width: 10),
+
+              // 🔥 BUTTON DELETE
+              GestureDetector(
+                onTap: () {
+                  showDialog(
+                    context: context,
+                    builder: (_) => AlertDialog(
+                      title: const Text("Hapus Data?"),
+                      content: const Text(
+                        "Yakin ingin menghapus riwayat absen ini?",
+                      ),
+                      actions: [
+                        TextButton(
+                          onPressed: () => Navigator.pop(context),
+                          child: const Text("Batal"),
+                        ),
+                        TextButton(
+                          onPressed: () {
+                            Navigator.pop(context);
+                            deleteHistory(item.id.toString());
+                          },
+                          child: const Text(
+                            "Hapus",
+                            style: TextStyle(color: Colors.red),
+                          ),
+                        ),
+                      ],
+                    ),
+                  );
+                },
+                child: Icon(
+                  Icons.delete,
+                  size: 20,
+                  color: Colors.red.withOpacity(0.7),
+                ),
               ),
             ],
           ),

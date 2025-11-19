@@ -5,6 +5,7 @@ import 'package:absennyok/constant/endpoint.dart';
 import 'package:absennyok/model/absenHistory.dart';
 import 'package:absennyok/model/checkin.dart';
 import 'package:absennyok/model/checkout.dart';
+import 'package:absennyok/model/historydelet.dart';
 import 'package:absennyok/model/historytoday.dart';
 import 'package:absennyok/model/register_model.dart';
 import 'package:absennyok/model/statistik.dart';
@@ -235,6 +236,26 @@ class AuthAPI {
     log(response.body);
     if (response.statusCode == 200) {
       return Register.fromJson(json.decode(response.body));
+    } else {
+      final error = json.decode(response.body);
+      throw Exception(error["message"]);
+    }
+  }
+
+  static Future<DeleteHistoryModel> deleteHistory({required String id}) async {
+    final url = Uri.parse("${Endpoint.deleteAbsen}/$id");
+    final String? token = await PreferenceHandler.getToken();
+    final response = await http.delete(
+      url,
+      headers: {"Authorization": "Bearer $token", "Accept": "application/json"},
+    );
+
+    print(response.body);
+    print(response.statusCode);
+    log(response.body);
+
+    if (response.statusCode == 200) {
+      return DeleteHistoryModel.fromJson(json.decode(response.body));
     } else {
       final error = json.decode(response.body);
       throw Exception(error["message"]);

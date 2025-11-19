@@ -10,4 +10,5 @@ class Endpoint {
   static const String statistic =
       "$baseUrl/absen/stats?start=2025-07-31&end=2025-12-31";
   static const String historyAbsen = "$baseUrl/absen/history";
+  static const String deleteAbsen = "$baseUrl/absen";
 }

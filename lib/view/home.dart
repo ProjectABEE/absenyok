@@ -370,16 +370,35 @@ class _HomePageState extends State<HomePage> {
                 // GLASS CARD — MAP PREVIEW
                 glassCard(
                   child: SizedBox(
-                    height: 180,
-                    child: ClipRRect(
-                      borderRadius: BorderRadius.circular(18),
-                      child: GoogleMap(
-                        myLocationEnabled: true,
-                        initialCameraPosition: CameraPosition(
-                          target: _currentPosition,
-                          zoom: 15,
+                    height: 220,
+                    child: Column(
+                      children: [
+                        Expanded(
+                          child: ClipRRect(
+                            borderRadius: BorderRadius.circular(18),
+                            child: GoogleMap(
+                              myLocationEnabled: true,
+                              initialCameraPosition: CameraPosition(
+                                target: _currentPosition,
+                                zoom: 15,
+                              ),
+                            ),
+                          ),
                         ),
-                      ),
+                        const SizedBox(height: 10),
+                        ElevatedButton(
+                          onPressed: () {
+                            _getCurrentLocation();
+                          },
+                          style: ElevatedButton.styleFrom(
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                            minimumSize: const Size(double.infinity, 45),
+                          ),
+                          child: const Text("Refresh Location"),
+                        ),
+                      ],
                     ),
                   ),
                 ),

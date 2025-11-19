@@ -1,60 +1,117 @@
+import 'dart:async';
+
 import 'package:absennyok/preferences/preferences_handler.dart';
 import 'package:absennyok/view/bottomnav.dart';
 import 'package:absennyok/view/login.dart';
 import 'package:flutter/material.dart';
 
-class SplashScreenDay33 extends StatefulWidget {
-  const SplashScreenDay33({super.key});
+class SplashScreen extends StatefulWidget {
+  const SplashScreen({super.key});
 
   @override
-  State<SplashScreenDay33> createState() => _SplashScreenDay33State();
+  State<SplashScreen> createState() => _SplashScreenState();
 }
 
-class _SplashScreenDay33State extends State<SplashScreenDay33> {
+class _SplashScreenState extends State<SplashScreen>
+    with SingleTickerProviderStateMixin {
+  late AnimationController _controller;
+  late Animation<double> _fadeAnim;
+
   @override
   void initState() {
     super.initState();
-    isLoginFunction();
-  }
 
-  isLoginFunction() async {
-    Future.delayed(Duration(seconds: 1)).then((value) async {
-      var isLogin = await PreferenceHandler.getLogin();
-      print(isLogin);
-      if (isLogin != null && isLogin == true) {
-        Navigator.pushAndRemoveUntil(
+    _controller = AnimationController(
+      duration: const Duration(seconds: 2),
+      vsync: this,
+    );
+
+    _fadeAnim = CurvedAnimation(parent: _controller, curve: Curves.easeIn);
+
+    _controller.forward();
+
+    Future.delayed(const Duration(seconds: 3), () async {
+      bool? isLogin = await PreferenceHandler.getLogin();
+      if (isLogin == true) {
+        Navigator.pushReplacement(
           context,
           MaterialPageRoute(builder: (context) => Bottomnav()),
-          (route) => false,
         );
       } else {
-        Navigator.pushAndRemoveUntil(
+        Navigator.pushReplacement(
           context,
-          MaterialPageRoute(builder: (context) => LoginPage()),
-          (route) => false,
+          MaterialPageRoute(builder: (context) => const LoginPage()),
         );
       }
     });
   }
 
   @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
     return Scaffold(
       body: Container(
+        width: double.infinity,
+        height: double.infinity,
         decoration: const BoxDecoration(
           gradient: LinearGradient(
             begin: Alignment.topCenter,
             end: Alignment.bottomCenter,
-            colors: [Color(0xff256BE8), Color(0xff1CE2DA)],
+            colors: [Color(0xff2E2E2E), Color(0xff1A1A1A)],
           ),
         ),
-        // Biar full tinggi layar
-        width: double.infinity,
-        height: double.infinity,
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          crossAxisAlignment: CrossAxisAlignment.center,
-          // children: [Center(child: Image.asset("assets/images/logoEdu.png"))],
+        child: FadeTransition(
+          opacity: _fadeAnim,
+          child: Center(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                // LOGO
+                Container(
+                  padding: const EdgeInsets.all(18),
+                  decoration: BoxDecoration(
+                    color: Colors.white.withOpacity(0.08),
+                    borderRadius: BorderRadius.circular(30),
+                    border: Border.all(color: Colors.white.withOpacity(0.2)),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withOpacity(0.4),
+                        blurRadius: 20,
+                      ),
+                    ],
+                  ),
+                  child: Image.asset("assets/images/logo.png", width: 110),
+                ),
+
+                const SizedBox(height: 25),
+
+                const Text(
+                  "Presence App",
+                  style: TextStyle(
+                    fontSize: 28,
+                    color: Colors.white,
+                    fontWeight: FontWeight.bold,
+                    shadows: [Shadow(color: Colors.black54, blurRadius: 12)],
+                  ),
+                ),
+
+                const SizedBox(height: 8),
+
+                Text(
+                  "Loading...",
+                  style: TextStyle(
+                    color: Colors.white.withOpacity(0.6),
+                    fontSize: 14,
+                  ),
+                ),
+              ],
+            ),
+          ),
         ),
       ),
     );
